@@ -10,7 +10,7 @@
 #   crush-love-dev [crush args...] everything else passes through to crush
 set -euo pipefail
 
-CRUSH="${CRUSH:-$(command -v crush || echo /opt/homebrew/bin/crush)}"
+CRUSH="$(command -v crush || true)"; CRUSH="${CRUSH:-/opt/homebrew/bin/crush}"
 CONFIG="${CRUSH_CONFIG:-$HOME/.config/crush/crush.json}"
 THEME="${LOVE_THEME:-ultralovegod}"
 
