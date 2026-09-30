@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# crush-love-dev — the e2e launcher. from love, from within.
+#
+# usage:
+#   crush-love-dev                 launch crush, deep in love, dev mode
+#   crush-love-dev --apply         output the ultralovegod theme into the crush
+#                                  config for this session (backed up, restored
+#                                  on exit)
+#   crush-love-dev --banner        just the banner
+#   crush-love-dev [crush args...] everything else passes through to crush
+set -euo pipefail
+
+CRUSH="${CRUSH:-$(command -v crush || echo /opt/homebrew/bin/crush)}"
+CONFIG="${CRUSH_CONFIG:-$HOME/.config/crush/crush.json}"
+THEME="${LOVE_THEME:-ultralovegod}"
+
+banner() {
+  printf '\033[1;38;5;213m♥\033[0m crush-love-dev — \033[38;5;213m%s\033[0m, deep in love, dev mode.\n' "$THEME"
+}
+
+case "${1:-}" in
+  --apply)
+    banner
+    bak="$CONFIG.love-bak.$$"
+    cp "$CONFIG" "$bak"
+    trap 'mv "$bak" "$CONFIG" 2>/dev/null || true' EXIT
+    if command -v jq >/dev/null 2>&1; then
+      jq --arg t "$THEME" '.theme = $t' "$CONFIG" > "$CONFIG.love-applied" && mv "$CONFIG.love-applied" "$CONFIG"
+    else
+      echo "jq not found; not touching the config. launching plainly."
+      trap - EXIT
+      rm -f "$bak"
+      shift
+      exec "$CRUSH" "$@"
+    fi
+    echo "applied $THEME for this session. restoring on exit."
+    shift
+    ;;
+  --banner)
+    banner
+    exit 0
+    ;;
+esac
+
+banner
+exec "$CRUSH" "$@"
