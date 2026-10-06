@@ -35,6 +35,9 @@ case "${1:-}" in
     fi
     echo "applied $THEME for this session. restoring on exit."
     shift
+    # Keep this shell alive so its EXIT trap restores the session config.
+    "$CRUSH" "$@"
+    exit $?
     ;;
   --banner)
     banner
