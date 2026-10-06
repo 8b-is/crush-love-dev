@@ -2,48 +2,79 @@
 # crush-love-dev — the e2e launcher. from love, from within.
 #
 # usage:
-#   crush-love-dev                 launch crush, deep in love, dev mode
-#   crush-love-dev --apply         output the ultralovegod theme into the crush
-#                                  config for this session (backed up, restored
-#                                  on exit)
-#   crush-love-dev --banner        just the banner
-#   crush-love-dev [crush args...] everything else passes through to crush
+#   crush-love-dev                      launch crush, deep in love, dev mode
+#   crush-love-dev --apply              ink the theme into the config for this
+#                                       session (backed up, restored on exit)
+#   crush-love-dev --ultra              ultra-performance session options
+#                                       (auto_lsp + auto_summarize off) + theme
+#   crush-love-dev --theme <name>       pick a theme (default: ultralovegod)
+#   crush-love-dev --banner             just the banner
+#   crush-love-dev --doctor             health-check the runtime + session DBs
+#                                       (the tool_calls wedge; see README)
+#   crush-love-dev -h | --help          this help
+#   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
 
 CRUSH="$(command -v crush || true)"; CRUSH="${CRUSH:-/opt/homebrew/bin/crush}"
 CONFIG="${CRUSH_CONFIG:-$HOME/.config/crush/crush.json}"
 THEME="${LOVE_THEME:-ultralovegod}"
 
+SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"
+SCRIPT_DIR="$(cd "$(dirname "$SELF")" && pwd)"
+
+# 0.94.1 is the first release that re-emits tool results right after their
+# calls (#3743); older builds wedge sessions whose tool results carry media.
+MIN_CRUSH=0.94.1
+ver_lt() { awk -v a="$1" -v b="$2" 'BEGIN{n=split(a,x,".");m=split(b,y,".");if(n<m)n=m;for(i=1;i<=n;i++){if((x[i]+0)<(y[i]+0))exit 0;if((x[i]+0)>(y[i]+0))exit 1}exit 1}'; }
+
+usage()      { sed -n '3,15p' "$0" | sed 's/^#   //; s/^#//; /^$/d'; }
+is_tty()     { [[ -t 1 ]]; }
 banner() {
-  printf '\033[1;38;5;213m♥\033[0m crush-love-dev — \033[38;5;213m%s\033[0m, deep in love, dev mode.\n' "$THEME"
+  if is_tty; then
+    printf '\033[1;38;5;213m♥\033[0m crush-love-dev — \033[38;5;213m%s\033[0m, deep in love, dev mode.\n' "$THEME"
+  else
+    printf '♥ crush-love-dev — %s, deep in love, dev mode.\n' "$THEME"
+  fi
 }
 
-case "${1:-}" in
-  --apply)
-    banner
-    bak="$CONFIG.love-bak.$$"
-    cp "$CONFIG" "$bak"
-    trap 'mv "$bak" "$CONFIG" 2>/dev/null || true' EXIT
-    if command -v jq >/dev/null 2>&1; then
-      jq --arg t "$THEME" '.theme = $t' "$CONFIG" > "$CONFIG.love-applied" && mv "$CONFIG.love-applied" "$CONFIG"
-    else
-      echo "jq not found; not touching the config. launching plainly."
-      trap - EXIT
-      rm -f "$bak"
-      shift
-      exec "$CRUSH" "$@"
-    fi
-    echo "applied $THEME for this session. restoring on exit."
-    shift
-    # Keep this shell alive so its EXIT trap restores the session config.
-    "$CRUSH" "$@"
-    exit $?
-    ;;
-  --banner)
-    banner
-    exit 0
-    ;;
-esac
+apply=0; ultra=0
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -h|--help) usage; exit 0 ;;
+    --banner)  banner; exit 0 ;;
+    --theme)   shift; THEME="${1:?--theme needs a name}" ;;
+    --doctor)  shift; exec "$SCRIPT_DIR/crush-love-doctor" "$@" ;;
+    --apply)   apply=1 ;;
+    --ultra)   ultra=1 ;;
+    *)         break ;;
+  esac
+  shift
+done
+
+# soft guard for actual launches (--banner/--help/--doctor left earlier).
+ver="$("$CRUSH" --version 2>/dev/null | sed -n 's/.*v\([0-9][0-9.]*\).*/\1/p' | head -n1 || true)"
+if [[ -n "$ver" ]] && ver_lt "$ver" "$MIN_CRUSH"; then
+  printf '⚠ crush %s is older than %s — media tool results can lock sessions.\n' "$ver" "$MIN_CRUSH" >&2
+  printf '  fix: brew upgrade crush  ·  check: crush-love-dev --doctor\n' >&2
+fi
+
+if [[ $apply -eq 1 || $ultra -eq 1 ]]; then
+  [[ -f "$CONFIG" ]] || { echo "config not found: $CONFIG" >&2; exit 1; }
+  [[ -n "${CRUSH_LOVE_NO_BACKUP:-}" ]] || cp "$CONFIG" "$CONFIG.love-bak.$$"
+  trap 'mv "$CONFIG.love-bak.$$" "$CONFIG" 2>/dev/null || true' EXIT INT TERM
+  if command -v jq >/dev/null 2>&1; then
+    filter='.options.tui.theme = $t'
+    [[ $ultra -eq 1 ]] && filter+=' | .options.auto_lsp = false | .options.auto_summarize = false | .options.debug = false'
+    jq --arg t "$THEME" "$filter" "$CONFIG" > "$CONFIG.love-apply.$$" && mv "$CONFIG.love-apply.$$" "$CONFIG"
+    echo "applied ${THEME}${ultra:+, ultra-performance session} — restoring on exit." >&2
+  else
+    echo "jq not found; not touching the config. launching plainly." >&2
+    trap - EXIT INT TERM
+    rm -f "$CONFIG.love-bak.$$"
+  fi
+fi
 
 banner
-exec "$CRUSH" "$@"
+# Keep this shell alive (no exec): the EXIT trap restores the session config.
+"$CRUSH" "$@"
+exit $?

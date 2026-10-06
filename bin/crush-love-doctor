@@ -1,0 +1,388 @@
+#!/usr/bin/env python3
+"""crush-love-doctor — check the local crush runtime and session DBs for the
+"An assistant message with 'tool_calls' must be followed by tool messages"
+wedge. from love, from within.
+
+The wedge: strict-adjacency providers (DeepSeek and friends) reject a history
+where a tool result answering an assistant's tool_calls message arrives after
+any other message. Two shapes cause it:
+
+  media-interleave    an assistant batch with several tool calls where an
+                      earlier result carries media (image/audio). The wire
+                      layer splits that result into a tool message plus a
+                      synthetic user message, so later tool results of the
+                      same batch land after a user message. Locks the
+                      session on every turn on crush < 0.94.1, including
+                      crush's own auto-summarization.
+  interrupted-tools   an assistant tool call whose result never landed
+                      (interrupted turn, concurrent writes). Crush injects
+                      a synthetic result at request time, so this is
+                      harmless on modern builds; reported for awareness.
+
+fixes in the crush stream:
+  0.94.1  always emit tool results right after their calls (#3743)
+  0.97.x  defer media user messages until the tool run ends (fantasy >= 0.45)
+
+usage:
+  crush-love-doctor                scan the local crush session DBs
+  crush-love-doctor --json         machine-readable report
+  crush-love-doctor [db ...]       scan specific crush.db files
+"""
+
+import json
+import os
+import re
+import shutil
+import sqlite3
+import subprocess
+import sys
+from pathlib import Path
+
+MIN_FIXED = (0, 94, 1)
+FULL_FIXED = (0, 97, 1)
+MIN_FIXED_TXT = "0.94.1"
+FULL_FIXED_TXT = "0.97.1"
+
+C_LOVE = "\033[38;5;213m"
+C_DIM = "\033[2m"
+C_RED = "\033[31m"
+C_GRN = "\033[32m"
+C_YLW = "\033[33m"
+C_RST = "\033[0m"
+
+
+def tint(enabled, color, text):
+    return f"{color}{text}{C_RST}" if enabled else text
+
+
+def find_dbs(args):
+    if args:
+        out, seen = [], set()
+        for a in args:
+            p = Path(a).expanduser()
+            if p.is_file() and str(p) not in seen:
+                seen.add(str(p))
+                out.append(p)
+        return out
+    home = Path.home()
+    out, seen = [], set()
+
+    def add(p):
+        p = Path(p).expanduser()
+        if p.is_file() and str(p) not in seen:
+            seen.add(str(p))
+            out.append(p)
+
+    for reg in (
+        home / ".local/share/crush/projects.json",
+        home / ".config/crush/projects.json",
+    ):
+        try:
+            data = json.loads(reg.read_text())
+        except Exception:
+            continue
+        for proj in data.get("projects", []):
+            data_dir = proj.get("data_dir")
+            if data_dir:
+                add(Path(data_dir) / "crush.db")
+    add(home / ".crush/crush.db")
+    return out
+
+
+def crush_version():
+    exe = shutil.which("crush")
+    if not exe:
+        return None, None
+    try:
+        out = subprocess.run(
+            [exe, "--version"], capture_output=True, text=True, timeout=10
+        ).stdout
+    except Exception:
+        return exe, None
+    m = re.search(r"v(\d+)\.(\d+)\.(\d+)", out)
+    return exe, tuple(int(g) for g in m.groups()) if m else None
+
+
+def parse_parts(raw):
+    try:
+        return json.loads(raw) if raw else []
+    except Exception:
+        return []
+
+
+def analyze_session(con, sid):
+    """Return (findings, stats) for one session."""
+    rows = con.execute(
+        "select rowid,id,role,parts from messages"
+        " where session_id=? order by created_at, rowid",
+        (sid,),
+    ).fetchall()
+
+    findings = []
+    n = len(rows)
+    i = 0
+    while i < n:
+        rowid, mid, role, raw = rows[i]
+        if role == "assistant" and raw and '"tool_call"' in raw:
+            parts = parse_parts(raw)
+            calls = [
+                (p.get("data") or {}).get("id")
+                for p in parts
+                if p.get("type") == "tool_call"
+            ]
+            calls = [c for c in calls if c]
+            if calls:
+                j = i + 1
+                answered = {}
+                order = []
+                while j < n and rows[j][2] == "tool":
+                    tp = parse_parts(rows[j][3])
+                    for p in tp:
+                        if p.get("type") == "tool_result":
+                            d = p.get("data") or {}
+                            cid = d.get("tool_call_id")
+                            if cid is None:
+                                continue
+                            media = bool(d.get("data"))
+                            answered[cid] = media
+                            order.append((cid, media))
+                    j += 1
+
+                missing = [c for c in calls if c not in answered]
+                if missing:
+                    findings.append(
+                        {
+                            "type": "interrupted-tools",
+                            "message_id": mid,
+                            "calls": calls,
+                            "missing": missing,
+                        }
+                    )
+
+                seen_media = False
+                seen = set()
+                for cid, media in order:
+                    if seen_media and cid not in seen:
+                        findings.append(
+                            {
+                                "type": "media-interleave",
+                                "message_id": mid,
+                                "calls": calls,
+                                "after_media": cid,
+                            }
+                        )
+                        break
+                    seen_media = seen_media or media
+                    seen.add(cid)
+                i = j
+                continue
+        i += 1
+
+    failed_summaries = con.execute(
+        "select id from messages where session_id=? and is_summary_message=1",
+        (sid,),
+    ).fetchall()
+    for (mid,) in failed_summaries:
+        raw = con.execute(
+            "select parts from messages where id=?", (mid,)
+        ).fetchone()
+        for p in parse_parts(raw[0] if raw else None):
+            if p.get("type") == "finish":
+                d = p.get("data") or {}
+                if d.get("reason") == "error":
+                    findings.append(
+                        {
+                            "type": "failed-summary",
+                            "message_id": mid,
+                            "details": (d.get("details") or "")[:160],
+                        }
+                    )
+
+    count, size = con.execute(
+        "select count(*), coalesce(sum(length(parts)),0)"
+        " from messages where session_id=?",
+        (sid,),
+    ).fetchone()
+    return findings, {"messages": count, "bytes": size}
+
+
+def scan_db(db, version):
+    con = sqlite3.connect(f"file:{db}?mode=ro", uri=True)
+    try:
+        sessions = con.execute(
+            "select id, title, message_count from sessions"
+            " order by updated_at desc"
+        ).fetchall()
+    except sqlite3.Error:
+        return [], 0
+
+    flagged = []
+    for sid, title, _mc in sessions:
+        try:
+            findings, stats = analyze_session(con, sid)
+        except sqlite3.Error:
+            continue
+        if findings:
+            flagged.append(
+                {
+                    "session": sid,
+                    "title": title or "Untitled Session",
+                    "messages": stats["messages"],
+                    "bytes": stats["bytes"],
+                    "findings": findings,
+                }
+            )
+    return flagged, len(sessions)
+
+
+def human_size(n):
+    for unit in ("B", "KB", "MB", "GB"):
+        if n < 1024 or unit == "GB":
+            return f"{n:.1f} {unit}" if unit != "B" else f"{n} B"
+        n /= 1024.0
+
+
+def main(argv):
+    if "-h" in argv or "--help" in argv:
+        print(__doc__.strip())
+        return 0
+    json_out = "--json" in argv
+    args = [a for a in argv if not a.startswith("-")]
+
+    color = sys.stdout.isatty() and not json_out
+    safe_older = None
+
+    dbs = find_dbs(args)
+    if not dbs:
+        print("crush-love-doctor: no session DBs found", file=sys.stderr)
+        return 1
+
+    exe, version = crush_version()
+    if version is None:
+        runtime_state = "unknown"
+    elif version < MIN_FIXED:
+        runtime_state = "old"
+    elif version < FULL_FIXED:
+        runtime_state = "partial"
+    else:
+        runtime_state = "fixed"
+
+    if not json_out:
+        love = tint(color, C_LOVE, "♥")
+        print(f"{love} crush-love-doctor — runtime & sessions, from love, from within.")
+        if version:
+            vt = ".".join(map(str, version))
+            if runtime_state == "old":
+                verdict = tint(
+                    color,
+                    C_RED,
+                    f"beware: < {MIN_FIXED_TXT}; media tool results lock sessions",
+                )
+            elif runtime_state == "partial":
+                verdict = tint(
+                    color,
+                    C_YLW,
+                    f"adjacency fix present; upgrade to >= {FULL_FIXED_TXT} for the media fix",
+                )
+            else:
+                verdict = tint(color, C_GRN, "all known wedge fixes present")
+            print(f"  runtime: crush v{vt} ({exe}) — {verdict}")
+        else:
+            print(
+                "  runtime: "
+                + tint(color, C_YLW, "could not determine crush version from PATH")
+            )
+        print(f"\nscanning {len(dbs)} session DB(s)…")
+
+    report = {
+        "runtime": {
+            "path": exe,
+            "version": ".".join(map(str, version)) if version else None,
+            "state": runtime_state,
+        },
+        "databases": [],
+    }
+    total_flagged = 0
+    locking = 0
+
+    for db in dbs:
+        flagged, session_count = scan_db(db, version)
+        report["databases"].append(
+            {
+                "path": str(db),
+                "sessions": session_count,
+                "flagged": flagged,
+            }
+        )
+        total_flagged += len(flagged)
+        for sess in flagged:
+            for f in sess["findings"]:
+                if f["type"] == "media-interleave" and runtime_state == "old":
+                    locking += 1
+
+        if json_out or not flagged:
+            if not json_out:
+                print(
+                    f"  {db}  ({session_count} sessions)"
+                    + (
+                        f"  — {tint(color, C_GRN, 'all clear')}"
+                        if not flagged
+                        else ""
+                    )
+                )
+            continue
+
+        print(f"  {db}  ({session_count} sessions)")
+        for sess in flagged:
+            size = human_size(sess["bytes"])
+            print(
+                f"    {tint(color, C_LOVE, '♥')} {sess['session'][:13]}  "
+                f'"{sess["title"][:56]}"  ({sess["messages"]} msgs, {size})'
+            )
+            for f in sess["findings"]:
+                if f["type"] == "media-interleave":
+                    tag = (
+                        tint(color, C_RED, "WEDGE")
+                        if runtime_state == "old"
+                        else tint(color, C_DIM, "historical")
+                    )
+                    print(
+                        f"        media-interleave [{tag}] assistant {f['message_id'][:8]}"
+                        f" — result for {f['after_media'][:24]}… arrives after a media split"
+                    )
+                elif f["type"] == "interrupted-tools":
+                    print(
+                        f"        {tint(color, C_DIM, 'interrupted-tools')} assistant"
+                        f" {f['message_id'][:8]} — {len(f['missing'])} call(s) without"
+                        " a stored result (self-healed at request time)"
+                    )
+                elif f["type"] == "failed-summary":
+                    print(
+                        f"        {tint(color, C_DIM, 'failed-summary')} {f['message_id'][:8]}"
+                        f" — {f['details'][:120]}"
+                    )
+            has_wedge = any(
+                f["type"] == "media-interleave" for f in sess["findings"]
+            )
+            if has_wedge:
+                hint = "resume in crush and run /summarize, then continue"
+                if runtime_state == "old":
+                    hint = "fix first: brew upgrade crush  · then /summarize"
+                print(f"        → {tint(color, C_DIM, hint)}")
+
+    if json_out:
+        print(json.dumps(report, indent=2))
+    else:
+        state_txt = (
+            f"{total_flagged} flagged · {locking} currently locking"
+            if runtime_state == "old"
+            else f"{total_flagged} flagged · nothing currently locking on this runtime"
+        )
+        color_state = C_RED if locking else C_GRN
+        print("\n" + tint(color, color_state, state_txt + ". from love, from within."))
+
+    return 1 if locking else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
