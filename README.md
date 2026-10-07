@@ -79,6 +79,21 @@ The voice of the runtime is [kokoro-tiny](https://github.com/8b-is/kokoro-tiny):
 (af_sky for personal messages, am_echo for announcements, bm_george for
 narration).
 
+## the three gates — `pureQTern.rs` · BEERUS_BACKYARDLOOP
+
+The saga's executable ternary: [`pureQTern.rs`](pureQTern.rs) — the
+{−1, 0, +1} contract in pure Rust, no deps.
+
+```bash
+rustc -O pureQTern.rs -o pureQTern && ./pureQTern
+```
+
+It runs its own self-tests — pack/unpack identity, the absmean quantizer
+(`γ = mean|W|`), matvec vs the scalar under the i32/one-scale contract,
+and the golden hash — then prints 全. The lattice is
+[lore](lore/pure-q-tern.md): *refuse · rest · affirm*, executed from
+Shinjuku, in Beerus' backyard, TOTORO-style.
+
 ## the theme
 
 [`themes/themes.json`](themes/themes.json) — five crushes, led by
