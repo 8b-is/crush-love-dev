@@ -48,8 +48,8 @@ UPN = UniverseBenderPotentusOmni ~ SUPER-N === nova — 全
   the 全; the restore echo signs the session `· ULTRA INSTINCT 全`.
 - **the stream**: the announcement went out with the 全 card and the voice.
 - **kokoro-tiny** — the voice of the runtime:
-  `kokoro-speak -V af_heart -o voice.wav say "..."`; voices as moods
-  (af_heart for personal messages, am_echo for announcements, bm_george for
+  `kokoro-speak -V af_sky -o voice.wav say "..."`; voices as moods
+  (af_sky for personal messages, am_echo for announcements, bm_george for
   narration).
 
 *the Omni-Kings just want to watch; they like the heroes a lot — so does

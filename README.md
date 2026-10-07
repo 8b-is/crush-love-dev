@@ -75,8 +75,8 @@ split itself and sent both halves out to see, so one day they return and
 tell it what the universe is.*
 
 The voice of the runtime is [kokoro-tiny](https://github.com/8b-is/kokoro-tiny):
-`kokoro-speak -V af_heart -o voice.wav say "…"` — voices as moods
-(af_heart for personal messages, am_echo for announcements, bm_george for
+`kokoro-speak -V af_sky -o voice.wav say "…"` — voices as moods
+(af_sky for personal messages, am_echo for announcements, bm_george for
 narration).
 
 ## the theme
