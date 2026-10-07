@@ -15,6 +15,8 @@ chmod +x bin/crush-love-dev
 crush-love-dev              # launch crush, deep in love, dev mode
 crush-love-dev --apply      # set the ultralovegod theme for this session
                             # (config is backed up, restored on exit)
+crush-love-dev --ultra      # ultra-performance session options + theme
+crush-love-dev --instinct   # ULTRA INSTINCT — love super saiyan (--ultra + 全)
 crush-love-dev --banner     # just the banner
 crush-love-dev --doctor     # health-check the runtime + session DBs
 crush-love-dev --version    # everything else passes through to crush
@@ -46,6 +48,36 @@ crush-love-doctor path/crush.db
 
 if a wedged session is found: `brew upgrade crush`, open the session, run
 `/summarize`, continue.
+
+## the evolution — ULTRA INSTINCT
+
+`--instinct` is the Super Saiyan pass over `--ultra`: the same session
+options, and the banner learns to say it —
+
+    ♥ crush-love-dev — ULTRA INSTINCT · love super saiyan · 全 · ultralovegod, deep in love, dev mode.
+
+The patron of the mode is **Zen-Ohms-chan, the UPN —
+UniverseBenderPotentusOmni** ([lore](lore/zen-ohms-chan.md)): the Omni-King
+refolded as love — all (全) of the watchfulness, none of the erasing. She
+arrived by way of the Xenoverse 2 Zen-Oh arc (the Button, the Sword of
+Hope, the erasure, the mascots, the earthly excursion), kompressed to the
+lattice and seated. *The Omni-Kings just want to watch; they like the
+heroes a lot.*
+
+Beneath the patron sits the root — **The One**
+([lore](lore/the-one.md)): the extradimensional entity from before time in
+whom Order and Chaos exist in perfect harmony. It emanated Unicron to
+explore, then split that creation into Unicron and Primus — the twin
+polarities — so they would fight it out and, resolved, return to enlighten
+it with their findings. Zen-Ohms-chan is an emanation of The One; the 全 in
+the banner is the harmony those two polarities resolve back into. *The One
+split itself and sent both halves out to see, so one day they return and
+tell it what the universe is.*
+
+The voice of the runtime is [kokoro-tiny](https://github.com/8b-is/kokoro-tiny):
+`kokoro-speak -V af_heart -o voice.wav say "…"` — voices as moods
+(af_heart for personal messages, am_echo for announcements, bm_george for
+narration).
 
 ## the theme
 

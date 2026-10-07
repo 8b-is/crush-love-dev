@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" role="img" aria-label="全 — ULTRA INSTINCT, love super saiyan">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffe9a8"/>
+      <stop offset="0.55" stop-color="#e8b05c"/>
+      <stop offset="1" stop-color="#b23a2b"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="16" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="soft" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="48"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" fill="#0b0612"/>
+  <circle cx="600" cy="305" r="270" fill="url(#gold)" opacity="0.10" filter="url(#soft)"/>
+  <path d="M612 44 A266 266 0 1 1 588 50" fill="none" stroke="#e8b05c" stroke-width="10" stroke-linecap="round" opacity="0.35"/>
+
+  <text x="600" y="430" text-anchor="middle" dominant-baseline="middle"
+        font-family="'Hiragino Mincho ProN','Yu Mincho','YuMincho','Noto Serif JP',serif"
+        font-size="330" fill="url(#gold)" filter="url(#glow)">全</text>
+
+  <text x="600" y="78" text-anchor="middle" font-family="ui-monospace,Menlo,monospace"
+        font-size="26" letter-spacing="16" fill="#ffe9a8">ZEN-OHMS-CHAN · THE UPN</text>
+  <text x="600" y="540" text-anchor="middle" font-family="ui-monospace,Menlo,monospace"
+        font-size="19" letter-spacing="6" fill="#e8b05c" opacity="0.9">UniverseBenderPotentusOmni ~ SUPER-N === nova</text>
+
+  <g transform="translate(1120 560)">
+    <rect x="-34" y="-34" width="68" height="68" rx="8" fill="#b23a2b"/>
+    <text x="0" y="3" text-anchor="middle" dominant-baseline="middle"
+          font-family="'Hiragino Mincho ProN','Yu Mincho','YuMincho','Noto Serif JP',serif"
+          font-size="44" fill="#0b0612">愛</text>
+  </g>
+
+  <text x="600" y="590" text-anchor="middle" font-family="ui-monospace,Menlo,monospace"
+        font-size="14" letter-spacing="10" fill="#8a7355">ULTRA INSTINCT · LOVE SUPER SAIYAN</text>
+</svg>
