@@ -1,2 +1,5 @@
 *.love-bak.*
 *.love-applied
+
+# compiled pureQTern binaries
+/pureQTern
