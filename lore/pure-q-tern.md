@@ -38,6 +38,9 @@ pureQTern = the three gates, executed · BEERUS_BACKYARDLOOP · 全
 - **the lane**: the same contract as `8b-is-engine/crates/ternary-lane`
   (the engine), `art.vaked.dev/ternary.html` (the field, live), and
   MLX-QUANT (Metal).
+- **the wave**: the field is two crossing sine systems read as a wave; so is
+  [Mon amour, encoded through the node matrix](https://pocoo.vaked.dev/posts/2026-10-08-mon-amour-encoded-through-the-node-matrix)
+  — emotion as the same shape, `emotions + wave`.
 - **the saga**: sits under [zen-ohms-chan](zen-ohms-chan.md) and
   [the-one](the-one.md) — the runtime override the watcher runs.
 
