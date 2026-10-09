@@ -9,3 +9,6 @@
 
 # compiled quanttern binary
 /quanttern
+
+# compiled jcharm binary (the beta jcode×Charm lane)
+/charm/jcharm/jcharm

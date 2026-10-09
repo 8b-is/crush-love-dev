@@ -26,6 +26,8 @@ crush-love-dev --lsp        # arm the vaked-lsp gateway: one LSP endpoint for
                             # UE C++, Rust, Go, Luau, Bash
 crush-love-dev --enthea     # arm the enthea engine door: its MCP servers +
                             # personas into the session
+crush-love-dev --jcode      # beta lane: jcode's UI wrapped in Charm's
+                            # capabilities (Bubble Tea · crush · charm CLI)
 crush-love-dev --version    # everything else passes through to crush
 ```
 
@@ -192,6 +194,27 @@ curl -fsSL https://raw.githubusercontent.com/8b-is/enthea/main/install.sh | sh
 enthea already knows how to wire *itself* into a client (`enthea setup opencode`);
 `--enthea` is the same wiring for crush — the surface stays replaceable, the
 engine stays yours.
+
+## the jcode × Charm lane (beta) — `charm/jcharm`
+
+`crush-love-dev --jcode` opens the beta front door that uses **jcode's UI**
+with **Charm's existing capabilities**: a small Go panel
+([`charm/jcharm`](charm/jcharm)) built on charmbracelet's Bubble Tea · Lip
+Gloss · Glamour, which launches jcode's Rust TUI as *the* UI, runs `crush` as
+the engine, and arms the charm CLI tools (gum · glow · vhs · mods) when they
+are present.
+
+```bash
+crush-love-dev --jcode             # the lane report (the panel, printed)
+crush-love-dev --jcode tui         # the interactive Charm panel
+crush-love-dev --jcode engine "…"  # crush headless, rendered with Glamour
+crush-love-dev --jcode ui          # jcode's UI, with Charm armed around it
+```
+
+The Rust↔Go seam is named in
+[docs/jcode-charm-lane.md](docs/jcode-charm-lane.md): jcode is Rust and cannot
+link the Go libraries, so Charm builds the door and jcode keeps the UI. Lives
+on the `beta/jcode-charm-lane` branch.
 
 ## the theme
 

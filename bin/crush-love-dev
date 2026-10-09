@@ -21,6 +21,8 @@
 #                                       endpoint for UE C++, Rust, Go, Luau, Bash
 #   crush-love-dev --enthea             arm the enthea engine door: its MCP
 #                                       servers + personas into the session
+#   crush-love-dev --jcode              the beta lane: jcode's UI wrapped in
+#                                       Charm's capabilities (charmbracelet + crush)
 #   crush-love-dev -h | --help          this help
 #   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
@@ -81,6 +83,18 @@ while [[ $# -gt 0 ]]; do
       bin="$SCRIPT_DIR/../quanttern"; src="$SCRIPT_DIR/../quanttern.rs"
       [[ -x "$bin" && "$bin" -nt "$src" ]] || rustc -O "$src" -o "$bin"
       exec "$bin" "$@"
+      ;;
+    --jcode)
+      shift
+      jdir="$SCRIPT_DIR/../charm/jcharm"; jbin="$jdir/jcharm"
+      if [[ ! -x "$jbin" || "$jbin" -ot "$jdir/main.go" || "$jbin" -ot "$jdir/go.mod" ]]; then
+        if ! command -v go >/dev/null 2>&1; then
+          printf 'go not found — cannot build jcharm; install Go, or run jcode directly.\n' >&2
+          exit 1
+        fi
+        ( cd "$jdir" && go build -o jcharm . ) || exit 1
+      fi
+      exec "$jbin" "$@"
       ;;
     --apply)   apply=1 ;;
     --lsp)     lsp=1 ;;
