@@ -21,6 +21,9 @@ crush-love-dev --banner     # just the banner
 crush-love-dev --doctor     # health-check the runtime + session DBs
 crush-love-dev --loop       # run the DO loop: reflect → improve → wire →
                             # polish → push → readme (pure Rust, no deps)
+crush-love-dev --quanttern  # the emotional ternary code (VAD → {−1,0,+1})
+crush-love-dev --lsp        # arm the vaked-lsp gateway: one LSP endpoint for
+                            # UE C++, Rust, Go, Luau, Bash
 crush-love-dev --version    # everything else passes through to crush
 ```
 
@@ -152,6 +155,19 @@ identity, agreement, the MEM8 wave bridge, and the pinned golden
   sovereign core (`core/src/quanttern.rs`), bridging to `WaveInt`'s
   `emotional_valence` / `arousal` rationals (the MEM8 substrate).
 - **`pureQTern.rs`** — the same gate codec (`−1 0b00 · 0 0b01 · +1 0b10`).
+
+## the LSP gateway — `vaked-lsp`
+
+`crush-love-dev --lsp` arms [`8b-is/vaked-lsp`](https://github.com/8b-is/vaked-lsp)
+as crush's **one** LSP endpoint: a single stdio server in front of clangd (UE
+C++), rust-analyzer, gopls, luau-lsp, and bash-language-server — routed by file
+extension, *one door, many lanes*. It writes an `lsp.vaked-lsp` entry into the
+crush config for the session and turns `auto_lsp` off, so the gateway is *the*
+server; the config is restored on exit.
+
+Binary resolve order: `$VAKED_LSP_BIN` → `vaked-lsp` on `PATH` → the sibling
+`vaked-lsp/target/{release,debug}/vaked-lsp`. Not built yet? `cargo build
+--release` in the vaked-lsp repo (its `Justfile` has `build-lsp`).
 
 ## the theme
 

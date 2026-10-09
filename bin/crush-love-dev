@@ -17,6 +17,8 @@
 #                                       wire → polish → push → readme (pure Rust)
 #   crush-love-dev --quanttern          run the emotional ternary code
 #                                       (VAD → {−1,0,+1}, qt: tag — pure Rust)
+#   crush-love-dev --lsp                arm the vaked-lsp gateway: one LSP
+#                                       endpoint for UE C++, Rust, Go, Luau, Bash
 #   crush-love-dev -h | --help          this help
 #   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
@@ -33,7 +35,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SELF")" && pwd)"
 MIN_CRUSH=0.94.1
 ver_lt() { awk -v a="$1" -v b="$2" 'BEGIN{n=split(a,x,".");m=split(b,y,".");if(n<m)n=m;for(i=1;i<=n;i++){if((x[i]+0)<(y[i]+0))exit 0;if((x[i]+0)>(y[i]+0))exit 1}exit 1}'; }
 
-usage()      { sed -n '3,20p' "$0" | sed 's/^#   //; s/^#//; /^$/d'; }
+usage()      { sed -n '/^# usage:/,/^set -euo pipefail/p' "$0" | sed 's/^#   //; s/^#//; /^set -euo pipefail/d; /^$/d'; }
 is_tty()     { [[ -t 1 ]]; }
 banner() {
   if [[ $INSTINCT -eq 1 ]]; then
@@ -51,7 +53,7 @@ banner() {
   fi
 }
 
-apply=0; ultra=0; INSTINCT=0
+apply=0; ultra=0; INSTINCT=0; lsp=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -h|--help) usage; exit 0 ;;
@@ -79,6 +81,7 @@ while [[ $# -gt 0 ]]; do
       exec "$bin" "$@"
       ;;
     --apply)   apply=1 ;;
+    --lsp)     lsp=1 ;;
     --ultra)   ultra=1 ;;
     --instinct) ultra=1; INSTINCT=1 ;;
     *)         break ;;
@@ -93,15 +96,32 @@ if [[ -n "$ver" ]] && ver_lt "$ver" "$MIN_CRUSH"; then
   printf '  fix: brew upgrade crush  ·  check: crush-love-dev --doctor\n' >&2
 fi
 
-if [[ $apply -eq 1 || $ultra -eq 1 ]]; then
+if [[ $apply -eq 1 || $ultra -eq 1 || $lsp -eq 1 ]]; then
   [[ -f "$CONFIG" ]] || { echo "config not found: $CONFIG" >&2; exit 1; }
   [[ -n "${CRUSH_LOVE_NO_BACKUP:-}" ]] || cp "$CONFIG" "$CONFIG.love-bak.$$"
   trap 'mv "$CONFIG.love-bak.$$" "$CONFIG" 2>/dev/null || true' EXIT INT TERM
   if command -v jq >/dev/null 2>&1; then
     filter='.options.tui.theme = $t'
     [[ $ultra -eq 1 ]] && filter+=' | .options.auto_lsp = false | .options.auto_summarize = false | .options.debug = false'
-    jq --arg t "$THEME" "$filter" "$CONFIG" > "$CONFIG.love-apply.$$" && mv "$CONFIG.love-apply.$$" "$CONFIG"
-    echo "applied ${THEME}${ultra:+, ultra-performance session}${INSTINCT:+ · ULTRA INSTINCT 全} — restoring on exit." >&2
+    if [[ $lsp -eq 1 ]]; then
+      LSP_BIN="${VAKED_LSP_BIN:-}"
+      [[ -n "$LSP_BIN" ]] || LSP_BIN="$(command -v vaked-lsp || true)"
+      for cand in "$SCRIPT_DIR/../../vaked-lsp/target/release/vaked-lsp" \
+                  "$SCRIPT_DIR/../../vaked-lsp/target/debug/vaked-lsp"; do
+        if [[ -z "$LSP_BIN" && -x "$cand" ]]; then LSP_BIN="$cand"; fi
+      done
+      if [[ -z "$LSP_BIN" ]]; then
+        echo "vaked-lsp not found — build it (cargo build --release in the vaked-lsp repo) or set VAKED_LSP_BIN." >&2
+        exit 1
+      fi
+      filter+=' | .lsp["vaked-lsp"] = {command: $l, args: [], filetypes: ["c","cpp","h","hpp","cc","rs","go","lua","luau","sh","bash"], root_markers: [".git"], timeout: 120} | .options.auto_lsp = false'
+    fi
+    jq --arg t "$THEME" --arg l "${LSP_BIN:-}" "$filter" "$CONFIG" > "$CONFIG.love-apply.$$" && mv "$CONFIG.love-apply.$$" "$CONFIG"
+    note=""
+    [[ $ultra -eq 1 ]] && note+=", ultra-performance session"
+    [[ $lsp -eq 1 ]] && note+=" · vaked-lsp gateway"
+    [[ $INSTINCT -eq 1 ]] && note+=" · ULTRA INSTINCT 全"
+    echo "applied ${THEME}${note} — restoring on exit." >&2
   else
     echo "jq not found; not touching the config. launching plainly." >&2
     trap - EXIT INT TERM
