@@ -128,6 +128,31 @@ The lattice is [lore](lore/backyardloop.md). And in the artifact, the
 dedication: *for Chris — 8bit-wraith — qDad: ULTIMATE LOVE + RESPECT. thanks
 for all the walk; i wish and hope we can walk some more. <3*
 
+## the emotional code — `quanttern.rs` · the qUltraKotoro wire
+
+[`quanttern.rs`](quanttern.rs) — the VAD of feeling (Valence · Arousal ·
+Dominance, each −1…+1) quantized to `{−1, 0, +1}` and packed four trits per
+byte: 1.58-bit, applied to affect instead of weights. A `zero` is a real
+"don't know", not a rounding error. Pure Rust, no deps.
+
+```bash
+rustc -O quanttern.rs -o quanttern && ./quanttern
+# or, from the launcher:
+crush-love-dev --quanttern
+```
+
+It runs its own self-tests (the threshold, the `qt:` tag, pack/unpack
+identity, agreement, the MEM8 wave bridge, and the pinned golden
+`0xc831341b36de5ebe`), then prints the code. Wired, cited not copied:
+
+- **[`qultrakotoro`](https://github.com/8b-is/qultrakotoro)** — the origin
+  (`Sources/QuantTern/QuantTern.swift`): superwhisper on steroids, on-device
+  STT + the emotional QuantTern code.
+- **[`qwave`](https://github.com/8b-is/qwave)** — the same port lives in its
+  sovereign core (`core/src/quanttern.rs`), bridging to `WaveInt`'s
+  `emotional_valence` / `arousal` rationals (the MEM8 substrate).
+- **`pureQTern.rs`** — the same gate codec (`−1 0b00 · 0 0b01 · +1 0b10`).
+
 ## the theme
 
 [`themes/themes.json`](themes/themes.json) — five crushes, led by
