@@ -24,6 +24,8 @@ crush-love-dev --loop       # run the DO loop: reflect → improve → wire →
 crush-love-dev --quanttern  # the emotional ternary code (VAD → {−1,0,+1})
 crush-love-dev --lsp        # arm the vaked-lsp gateway: one LSP endpoint for
                             # UE C++, Rust, Go, Luau, Bash
+crush-love-dev --enthea     # arm the enthea engine door: its MCP servers +
+                            # personas into the session
 crush-love-dev --version    # everything else passes through to crush
 ```
 
@@ -168,6 +170,28 @@ server; the config is restored on exit.
 Binary resolve order: `$VAKED_LSP_BIN` → `vaked-lsp` on `PATH` → the sibling
 `vaked-lsp/target/{release,debug}/vaked-lsp`. Not built yet? `cargo build
 --release` in the vaked-lsp repo (its `Justfile` has `build-lsp`).
+
+## the engine door — `enthea`
+
+`crush-love-dev --enthea` arms [`8b-is/enthea`](https://github.com/8b-is/enthea),
+the engine door: one pure-stdlib Go binary that runs the deepsiper-enthea MCP
+servers and installs the constellation personas. It writes an
+`mcp.enthea = {type: "stdio", command: <enthea>, args: ["mcp"], enabled: true}`
+entry into the crush config for the session (restored on exit), so the engine's
+tools — `personas_list`, `kompress_compress`, `kompress_persons` — show up
+natively in crush.
+
+Binary resolve order: `$ENTHEA_BIN` → `enthea` on `PATH` → `~/.local/bin/enthea`
+→ the sibling `enthea/enthea` / `enthea/deepsiper-enthea`. Not installed?
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/8b-is/enthea/main/install.sh | sh
+# or: brew install 8b-is/tap/deepsiper-enthea  ·  nix profile install github:8b-is/enthea
+```
+
+enthea already knows how to wire *itself* into a client (`enthea setup opencode`);
+`--enthea` is the same wiring for crush — the surface stays replaceable, the
+engine stays yours.
 
 ## the theme
 
