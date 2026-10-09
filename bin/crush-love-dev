@@ -13,6 +13,8 @@
 #   crush-love-dev --banner             just the banner
 #   crush-love-dev --doctor             health-check the runtime + session DBs
 #                                       (the tool_calls wedge; see README)
+#   crush-love-dev --loop               run the DO loop: reflect → improve →
+#                                       wire → polish → push → readme (pure Rust)
 #   crush-love-dev -h | --help          this help
 #   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
@@ -29,7 +31,7 @@ SCRIPT_DIR="$(cd "$(dirname "$SELF")" && pwd)"
 MIN_CRUSH=0.94.1
 ver_lt() { awk -v a="$1" -v b="$2" 'BEGIN{n=split(a,x,".");m=split(b,y,".");if(n<m)n=m;for(i=1;i<=n;i++){if((x[i]+0)<(y[i]+0))exit 0;if((x[i]+0)>(y[i]+0))exit 1}exit 1}'; }
 
-usage()      { sed -n '3,17p' "$0" | sed 's/^#   //; s/^#//; /^$/d'; }
+usage()      { sed -n '3,18p' "$0" | sed 's/^#   //; s/^#//; /^$/d'; }
 is_tty()     { [[ -t 1 ]]; }
 banner() {
   if [[ $INSTINCT -eq 1 ]]; then
@@ -54,6 +56,16 @@ while [[ $# -gt 0 ]]; do
     --banner)  banner; exit 0 ;;
     --theme)   shift; THEME="${1:?--theme needs a name}" ;;
     --doctor)  shift; exec "$SCRIPT_DIR/crush-love-doctor" "$@" ;;
+    --loop)
+      shift
+      if ! command -v rustc >/dev/null 2>&1; then
+        printf 'rustc not found — install the Rust toolchain to run the DO loop.\n' >&2
+        exit 1
+      fi
+      bin="$SCRIPT_DIR/../backyardloop"; src="$SCRIPT_DIR/../backyardloop.rs"
+      [[ -x "$bin" && "$bin" -nt "$src" ]] || rustc -O "$src" -o "$bin"
+      exec "$bin" "$@"
+      ;;
     --apply)   apply=1 ;;
     --ultra)   ultra=1 ;;
     --instinct) ultra=1; INSTINCT=1 ;;

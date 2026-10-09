@@ -3,3 +3,6 @@
 
 # compiled pureQTern binaries
 /pureQTern
+
+# compiled backyardloop binary
+/backyardloop
