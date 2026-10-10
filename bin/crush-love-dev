@@ -21,6 +21,8 @@
 #                                       endpoint for UE C++, Rust, Go, Luau, Bash
 #   crush-love-dev --enthea             arm the enthea engine door: its MCP
 #                                       servers + personas into the session
+#   crush-love-dev --mesh [--via NAME]  render the harness mesh (crush ⇄ jcode ⇄
+#                                       opencode): one shared substrate, then launch
 #   crush-love-dev -h | --help          this help
 #   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
@@ -82,6 +84,23 @@ while [[ $# -gt 0 ]]; do
       [[ -x "$bin" && "$bin" -nt "$src" ]] || rustc -O "$src" -o "$bin"
       exec "$bin" "$@"
       ;;
+    --mesh)
+      shift
+      via="crush"; dry=""
+      if [[ "${1:-}" == "--via" ]]; then shift; via="${1:-crush}"; shift; fi
+      if [[ "${1:-}" == "--dry-run" ]]; then dry="--dry-run"; shift; fi
+      mesh_py="$SCRIPT_DIR/../scripts/mesh.py"
+      [[ -f "$mesh_py" ]] || { printf 'mesh: %s not found\n' "$mesh_py" >&2; exit 1; }
+      if command -v uv >/dev/null 2>&1; then
+        uv run "$mesh_py" sync $dry || exit 1
+      else
+        python3 "$mesh_py" sync $dry || exit 1
+      fi
+      [[ -n "$dry" ]] && exit 0
+      hbin="$(command -v "$via" || true)"
+      [[ -n "$hbin" ]] || { printf 'mesh: harness %s not on PATH\n' "$via" >&2; exit 1; }
+      exec "$hbin" "$@"
+      ;;
     --apply)   apply=1 ;;
     --lsp)     lsp=1 ;;
     --enthea)  enthea=1 ;;
@@ -109,8 +128,7 @@ if [[ $apply -eq 1 || $ultra -eq 1 || $lsp -eq 1 || $enthea -eq 1 ]]; then
     if [[ $lsp -eq 1 ]]; then
       LSP_BIN="${VAKED_LSP_BIN:-}"
       [[ -n "$LSP_BIN" ]] || LSP_BIN="$(command -v vaked-lsp || true)"
-      for cand in "$SCRIPT_DIR/../../vaked-lsp/target/release/vaked-lsp" \
-                  "$SCRIPT_DIR/../../vaked-lsp/target/debug/vaked-lsp"; do
+      for cand in "$SCRIPT_DIR/../../vaked-lsp/target/release/vaked-lsp" "$SCRIPT_DIR/../../vaked-lsp/target/debug/vaked-lsp"; do
         if [[ -z "$LSP_BIN" && -x "$cand" ]]; then LSP_BIN="$cand"; fi
       done
       if [[ -z "$LSP_BIN" ]]; then
@@ -122,8 +140,7 @@ if [[ $apply -eq 1 || $ultra -eq 1 || $lsp -eq 1 || $enthea -eq 1 ]]; then
     if [[ $enthea -eq 1 ]]; then
       ENT_BIN="${ENTHEA_BIN:-}"
       [[ -n "$ENT_BIN" ]] || ENT_BIN="$(command -v enthea || true)"
-      for cand in "$HOME/.local/bin/enthea" "$SCRIPT_DIR/../../enthea/enthea" \
-                  "$SCRIPT_DIR/../../enthea/deepsiper-enthea"; do
+      for cand in "$HOME/.local/bin/enthea" "$SCRIPT_DIR/../../enthea/enthea" "$SCRIPT_DIR/../../enthea/deepsiper-enthea"; do
         if [[ -z "$ENT_BIN" && -x "$cand" ]]; then ENT_BIN="$cand"; fi
       done
       if [[ -z "$ENT_BIN" ]]; then

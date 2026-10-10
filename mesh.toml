@@ -1,0 +1,69 @@
+# mesh.toml — the harness mesh address book
+#
+#   crush ⇄ jcode ⇄ opencode — one door, many lanes; a shared brain.
+#
+# `crush-love-dev --mesh` reads this, renders the shared substrate into each
+# harness's native dialect, and launches the harness you pick (`--via`).
+# Idempotent: every write is backed up (`.mesh-bak`) and only happens if the
+# file actually changes.
+#
+# SPDX-License-Identifier: AGPL-3.0-only
+
+[mesh]
+name = "harness-mesh"
+# the append-only ledger — the truth every harness can read
+ledger = "~/.local/state/harness-mesh/ledger.ndjson"
+
+[shared.theme]
+# rendered into crush (`options.tui.theme`); jcode/opencode themes are a next slice
+name = "ultralovegod"
+
+[shared.persona]
+# one instruction surface, fanned out; crush reads this path by default
+file = "~/.config/AGENTS.md"
+text = """
+# the harness mesh — shared instruction
+
+This machine runs three peer harnesses — **crush · jcode · opencode** — over
+one shared substrate: MCP servers, personas, the theme, and the ledger. Seat
+it with `crush-love-dev --mesh`; read the ledger at `~/.local/state/harness-mesh/ledger.ndjson`.
+The harnesses are peers: any can front a session, the others are engines.
+"""
+
+# ── the shared MCP set — rendered into every harness's dialect ──────────────
+# crush  (crush.json)   : mcp[id] = {type:"stdio", command, args}
+# jcode  (mcp.json)     : servers[id] = {command, args, env, shared}
+# opencode (opencode.json): mcp[id] = {type:"local", command:[...], enabled}
+
+[shared.mcp.memnet]
+command = "bash"
+args = ["-lc", "cd '/Users/lodripeter/workspace/peterlodri-sec/memnet' && exec st --mcp"]
+
+[shared.mcp.ultra-mcp]
+command = "st"
+args = ["--mcp"]
+
+[shared.mcp.swift-mcp]
+command = "/opt/homebrew/bin/node"
+args = ["/Users/lodripeter/.local/mcp/swift-mcp/node_modules/swift-mcp/dist/index.js"]
+
+[shared.mcp.bluesky-mcp]
+command = "/opt/homebrew/bin/node"
+args = ["/Users/lodripeter/workspace/bluesky-mcp/dist/index.js"]
+
+# ── the peers ───────────────────────────────────────────────────────────────
+
+[harness.crush]
+kind = "crush"
+home = "~/.config/crush"
+config = "crush.json"
+
+[harness.jcode]
+kind = "jcode"
+home = "~/.jcode"
+config = "mcp.json"
+
+[harness.opencode]
+kind = "opencode"
+home = "~/.config/opencode"
+config = "opencode.json"

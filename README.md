@@ -26,6 +26,8 @@ crush-love-dev --lsp        # arm the vaked-lsp gateway: one LSP endpoint for
                             # UE C++, Rust, Go, Luau, Bash
 crush-love-dev --enthea     # arm the enthea engine door: its MCP servers +
                             # personas into the session
+crush-love-dev --mesh       # peer mesh: one shared substrate (MCP · theme ·
+                            # persona · ledger) across crush ⇄ jcode ⇄ opencode
 crush-love-dev --version    # everything else passes through to crush
 ```
 
@@ -192,6 +194,28 @@ curl -fsSL https://raw.githubusercontent.com/8b-is/enthea/main/install.sh | sh
 enthea already knows how to wire *itself* into a client (`enthea setup opencode`);
 `--enthea` is the same wiring for crush — the surface stays replaceable, the
 engine stays yours.
+
+## the harness mesh — `crush-love-dev --mesh`
+
+Three coding harnesses live on this machine — **crush · jcode · opencode** —
+each with its own home and config dialect. `--mesh` makes them a **peer mesh
+with one shared brain**: it reads [`mesh.toml`](mesh.toml), renders the shared
+MCP set (plus the `ultralovegod` theme and a shared `AGENTS.md`) into each
+harness's native config, records the run in a ledger, then launches the harness
+you pick. Idempotent and safe — every write is backed up to `*.mesh-bak`, only
+happens if the file changes, and a corrupt JSON config is never clobbered.
+
+```bash
+crush-love-dev --mesh                # sync + launch crush
+crush-love-dev --mesh --via jcode    # …or launch jcode's UI
+crush-love-dev --mesh --dry-run      # show what would change
+uv run scripts/mesh.py status        # → 4/4 shared MCP in each home
+```
+
+One source, three renderings: crush `mcp[id] = {type,command,args}` · jcode
+`servers[id] = {command,args,env,shared}` · opencode
+`mcp[id] = {command:[…],type:"local",enabled}`. Design +
+[open questions](docs/harness-mesh.md).
 
 ## the theme
 
