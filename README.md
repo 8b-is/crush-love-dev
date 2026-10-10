@@ -47,7 +47,8 @@ session DBs for the wedge that locks a session behind
 fixed in the crush stream: **0.94.1** re-emits tool results right after their
 calls ([#3743](https://github.com/charmbracelet/crush/pull/3743)); **0.97.x**
 defers the media split until the tool run ends. the launcher warns if the
-runtime on `PATH` is older than 0.94.1.
+runtime on `PATH` is older than 0.94.1. **0.98.x** is the current verified
+runtime.
 
 ```bash
 crush-love-doctor            # scan projects.json + ~/.crush
@@ -227,6 +228,19 @@ see [`themes/README.md`](themes/README.md) for the index and the apply path.
 
 [`scripts/list-skills.sh`](scripts/list-skills.sh) — list the available
 skills in a proper UX way, grouped by source.
+
+## tests
+
+```bash
+bash tests/whitespace.sh     # syntax + no tabs / trailing whitespace / CRLF
+bash tests/theme-restore.sh  # the session config is restored on exit, silently
+```
+
+[`tests/whitespace.sh`](tests/whitespace.sh) guards the launcher against the
+paste-class bug that makes bash report a misleading syntax error far from the
+real edit site: a stray tab, a trailing space after a line continuation, or a
+CRLF. It runs `bash -n` over every shell script, `py_compile`s the doctor, and
+fails on any of the three.
 
 ## love
 

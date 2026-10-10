@@ -6,7 +6,7 @@ trap 'rm -rf "$tmp"' EXIT
 mkdir "$tmp/bin"
 cat > "$tmp/bin/crush" <<'MOCK'
 #!/usr/bin/env bash
-[[ "$(jq -r .theme "$CRUSH_CONFIG")" == ultralovegod ]] || exit 99
+[[ "$(jq -r .options.tui.theme "$CRUSH_CONFIG")" == ultralovegod ]] || exit 99
 exit "${MOCK_EXIT:-0}"
 MOCK
 chmod +x "$tmp/bin/crush"
