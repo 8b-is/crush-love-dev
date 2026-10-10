@@ -26,6 +26,8 @@ crush-love-dev --lsp        # arm the vaked-lsp gateway: one LSP endpoint for
                             # UE C++, Rust, Go, Luau, Bash
 crush-love-dev --enthea     # arm the enthea engine door: its MCP servers +
                             # personas into the session
+crush-love-dev --mesh       # peer mesh: one shared substrate (MCP · theme ·
+                            # persona · ledger) across crush ⇄ jcode ⇄ opencode
 crush-love-dev --version    # everything else passes through to crush
 ```
 
@@ -45,7 +47,8 @@ session DBs for the wedge that locks a session behind
 fixed in the crush stream: **0.94.1** re-emits tool results right after their
 calls ([#3743](https://github.com/charmbracelet/crush/pull/3743)); **0.97.x**
 defers the media split until the tool run ends. the launcher warns if the
-runtime on `PATH` is older than 0.94.1.
+runtime on `PATH` is older than 0.94.1. **0.98.x** is the current verified
+runtime.
 
 ```bash
 crush-love-doctor            # scan projects.json + ~/.crush
@@ -193,6 +196,28 @@ enthea already knows how to wire *itself* into a client (`enthea setup opencode`
 `--enthea` is the same wiring for crush — the surface stays replaceable, the
 engine stays yours.
 
+## the harness mesh — `crush-love-dev --mesh`
+
+Three coding harnesses live on this machine — **crush · jcode · opencode** —
+each with its own home and config dialect. `--mesh` makes them a **peer mesh
+with one shared brain**: it reads [`mesh.toml`](mesh.toml), renders the shared
+MCP set (plus the `ultralovegod` theme and a shared `AGENTS.md`) into each
+harness's native config, records the run in a ledger, then launches the harness
+you pick. Idempotent and safe — every write is backed up to `*.mesh-bak`, only
+happens if the file changes, and a corrupt JSON config is never clobbered.
+
+```bash
+crush-love-dev --mesh                # sync + launch crush
+crush-love-dev --mesh --via jcode    # …or launch jcode's UI
+crush-love-dev --mesh --dry-run      # show what would change
+uv run scripts/mesh.py status        # → 4/4 shared MCP in each home
+```
+
+One source, three renderings: crush `mcp[id] = {type,command,args}` · jcode
+`servers[id] = {command,args,env,shared}` · opencode
+`mcp[id] = {command:[…],type:"local",enabled}`. Design +
+[open questions](docs/harness-mesh.md).
+
 ## the theme
 
 [`themes/themes.json`](themes/themes.json) — five crushes, led by
@@ -203,6 +228,19 @@ see [`themes/README.md`](themes/README.md) for the index and the apply path.
 
 [`scripts/list-skills.sh`](scripts/list-skills.sh) — list the available
 skills in a proper UX way, grouped by source.
+
+## tests
+
+```bash
+bash tests/whitespace.sh     # syntax + no tabs / trailing whitespace / CRLF
+bash tests/theme-restore.sh  # the session config is restored on exit, silently
+```
+
+[`tests/whitespace.sh`](tests/whitespace.sh) guards the launcher against the
+paste-class bug that makes bash report a misleading syntax error far from the
+real edit site: a stray tab, a trailing space after a line continuation, or a
+CRLF. It runs `bash -n` over every shell script, `py_compile`s the doctor, and
+fails on any of the three.
 
 ## love
 
