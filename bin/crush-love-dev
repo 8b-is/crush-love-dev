@@ -17,6 +17,8 @@
 #                                       wire → polish → push → readme (pure Rust)
 #   crush-love-dev --quanttern          run the emotional ternary code
 #                                       (VAD → {−1,0,+1}, qt: tag — pure Rust)
+#   crush-love-dev --zen                run ULTRA-OMNI-ZEN-peter × QUANT-TERN ×
+#                                       zenUltraCooker bridge (pure Rust)
 #   crush-love-dev --lsp                arm the vaked-lsp gateway: one LSP
 #                                       endpoint for UE C++, Rust, Go, Luau, Bash
 #   crush-love-dev --enthea             arm the enthea engine door: its MCP
@@ -81,6 +83,16 @@ while [[ $# -gt 0 ]]; do
         exit 1
       fi
       bin="$SCRIPT_DIR/../quanttern"; src="$SCRIPT_DIR/../quanttern.rs"
+      [[ -x "$bin" && "$bin" -nt "$src" ]] || rustc -O "$src" -o "$bin"
+      exec "$bin" "$@"
+      ;;
+    --zen|--ultra-omni-zen)
+      shift
+      if ! command -v rustc >/dev/null 2>&1; then
+        printf 'rustc not found — install the Rust toolchain to run ultra_omni_zen_peter.\n' >&2
+        exit 1
+      fi
+      bin="$SCRIPT_DIR/../ultra_omni_zen_peter"; src="$SCRIPT_DIR/../ultra_omni_zen_peter.rs"
       [[ -x "$bin" && "$bin" -nt "$src" ]] || rustc -O "$src" -o "$bin"
       exec "$bin" "$@"
       ;;

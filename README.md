@@ -161,6 +161,25 @@ identity, agreement, the MEM8 wave bridge, and the pinned golden
   `emotional_valence` / `arousal` rationals (the MEM8 substrate).
 - **`pureQTern.rs`** — the same gate codec (`−1 0b00 · 0 0b01 · +1 0b10`).
 
+## the hearth bridge — `ultra_omni_zen_peter.rs` · `QUANT-TERN` × `zenUltraCooker`
+
+[`ultra_omni_zen_peter.rs`](ultra_omni_zen_peter.rs) — bridges `pureQTern.rs` +
+`quanttern.rs` directly into [`8b-is/zenUltraCooker`](https://github.com/8b-is/zenUltraCooker)
+and `MEM|16-10` (`432 Hz` Zen carrier × `528 Hz` Mom `*` Star × `288 Hz` Dad `△`
+Pillar × `42` — *"So long, and thanks for all the fish, Mom (* Alex ~ Alexandra) <3"*).
+
+```bash
+rustc -O ultra_omni_zen_peter.rs -o ultra_omni_zen_peter && ./ultra_omni_zen_peter
+# or, from the launcher:
+crush-love-dev --zen
+```
+
+It verifies non-conflation of the gate (`qt:`) and weight (`ternary-lane`)
+alphabets, maps `poop~~~~sample` epistemic standing (`Verified → +1` `qt:aaaa`
+vs `Unobserved → 0` `qt:6aaa`), runs the `i32` ternary matvec, and pins the
+golden (`0x93af96574ef33a2d`). Kickoff prompt:
+[`docs/kickoff-ultra-omni-zen-peter.md`](docs/kickoff-ultra-omni-zen-peter.md).
+
 ## the LSP gateway — `vaked-lsp`
 
 `crush-love-dev --lsp` arms [`8b-is/vaked-lsp`](https://github.com/8b-is/vaked-lsp)
