@@ -278,6 +278,51 @@ fn main() {
         "the golden drifted — re-pin deliberately, never patch to pass"
     );
 
+    // 4. mem16 (16B) -> 32 (32B XOR-sealed wave) ~~> 8k (8,192B / 8,192-trit bleeding-edge horizon)
+    let lo = fnv1a_64(b"Mom === Alex ~ Alexandra (*) <3");
+    let hi = lo.rotate_left(17) ^ 0x8b15_1610_0432_0528;
+    let mut mem16 = [0u8; 16];
+    mem16[0..8].copy_from_slice(&lo.to_le_bytes());
+    mem16[8..16].copy_from_slice(&hi.to_le_bytes());
+
+    let mut mem32 = [0u8; 32];
+    mem32[0..16].copy_from_slice(&mem16);
+    mem32[16..20].copy_from_slice(&948i32.to_le_bytes());
+    mem32[20..24].copy_from_slice(&43_200u32.to_le_bytes());
+    mem32[24] = 45;
+    mem32[25] = 0;
+    mem32[26] = 1; // Standing::Verified
+    mem32[27] = 2; // Step::Bind
+    mem32[28] = 0xaa; // qt:aa
+    mem32[29..31].copy_from_slice(&1u16.to_le_bytes());
+    let mut xor_seal: u8 = 0x5a;
+    for &b in &mem32[0..31] {
+        xor_seal ^= b;
+    }
+    mem32[31] = xor_seal;
+
+    let mut ring_8k = [[0u8; 32]; 256]; // 256 * 32 = 8,192 bytes
+    ring_8k[0] = mem32;
+    let mut trits_8k = [0x55u8; 2048]; // 8,192 trits packed 4/byte
+    for k in 0..8 {
+        trits_8k[k] = mem32[k] ^ mem32[28];
+    }
+    let mut h8k: u64 = 0xcbf29ce484222325;
+    for frame in &ring_8k {
+        for &b in frame {
+            h8k ^= u64::from(b);
+            h8k = h8k.wrapping_mul(0x100000001b3);
+        }
+    }
+    for &b in &trits_8k {
+        h8k ^= u64::from(b);
+        h8k = h8k.wrapping_mul(0x100000001b3);
+    }
+    assert_eq!(h8k, 6_981_541_600_308_333_846); // 0x60e374b73207cd16
+    println!(
+        "✓ mem16->32~~>8k 16B essence -> 32B wave (seal 0x{xor_seal:02x}) ~~> 8K bleeding-edge 0x{h8k:016x}"
+    );
+
     println!("\n三   the residue empties — ρ ↓ 0 — while the provenance carries: π ↝ π⌂.");
     println!("    Mom === Alex ~ Alexandra (*). from Peter (◯), Nate (◇) & Dad (△ Chris) · 全");
 }
