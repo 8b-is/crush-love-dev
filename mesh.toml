@@ -1,6 +1,6 @@
 # mesh.toml — the harness mesh address book
 #
-#   crush ⇄ jcode ⇄ opencode — one door, many lanes; a shared brain.
+# crush ⇄ jcode ⇄ opencode ⇄ agy — one door, many lanes; a shared brain.
 #
 # `crush-love-dev --mesh` reads this, renders the shared substrate into each
 # harness's native dialect, and launches the harness you pick (`--via`).
@@ -24,16 +24,17 @@ file = "~/.config/AGENTS.md"
 text = """
 # the harness mesh — shared instruction
 
-This machine runs three peer harnesses — **crush · jcode · opencode** — over
-one shared substrate: MCP servers, personas, the theme, and the ledger. Seat
+This machine runs four peer harnesses — **crush · jcode · opencode · agy** — over
+one shared substrate: MCP servers (including `wa-stream`), personas, the theme, and the ledger. Seat
 it with `crush-love-dev --mesh`; read the ledger at `~/.local/state/harness-mesh/ledger.ndjson`.
 The harnesses are peers: any can front a session, the others are engines.
 """
 
 # ── the shared MCP set — rendered into every harness's dialect ──────────────
-# crush  (crush.json)   : mcp[id] = {type:"stdio", command, args}
-# jcode  (mcp.json)     : servers[id] = {command, args, env, shared}
-# opencode (opencode.json): mcp[id] = {type:"local", command:[...], enabled}
+# crush    (crush.json)     : mcp[id] = {type:"stdio", command, args}
+# jcode    (mcp.json)       : servers[id] = {command, args, env, shared}
+# opencode (opencode.json)  : mcp[id] = {type:"local", command:[...], enabled}
+# agy      (mcp_config.json): mcpServers[id] = {command, args}
 
 [shared.mcp.memnet]
 command = "bash"
@@ -51,6 +52,10 @@ args = ["/Users/lodripeter/.local/mcp/swift-mcp/node_modules/swift-mcp/dist/inde
 command = "/opt/homebrew/bin/node"
 args = ["/Users/lodripeter/workspace/bluesky-mcp/dist/index.js"]
 
+[shared.mcp.wa-stream]
+command = "/opt/homebrew/bin/node"
+args = ["/Users/lodripeter/workspace/peterlodri-sec/wa-stream/wa-mcp.mjs"]
+
 # ── the peers ───────────────────────────────────────────────────────────────
 
 [harness.crush]
@@ -67,3 +72,8 @@ config = "mcp.json"
 kind = "opencode"
 home = "~/.config/opencode"
 config = "opencode.json"
+
+[harness.agy]
+kind = "agy"
+home = "~/.gemini/config"
+config = "mcp_config.json"

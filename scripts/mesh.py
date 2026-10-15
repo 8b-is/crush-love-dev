@@ -87,6 +87,10 @@ def render_servers(kind: str, servers: dict) -> dict:
             spec = {"command": cmd, "args": args, "env": env, "shared": True}
         elif kind == "opencode":
             spec = {"type": "local", "command": [cmd, *args], "enabled": True}
+        elif kind == "agy":
+            spec = {"command": cmd, "args": args}
+            if env:
+                spec["env"] = env
         else:
             die(f"unknown harness kind: {kind!r}")
         out[sid] = spec
@@ -94,7 +98,13 @@ def render_servers(kind: str, servers: dict) -> dict:
 
 
 def bucket(doc: dict, kind: str) -> dict:
-    return doc.setdefault("servers" if kind == "jcode" else "mcp", {})
+    if kind == "jcode":
+        key = "servers"
+    elif kind == "agy":
+        key = "mcpServers"
+    else:
+        key = "mcp"
+    return doc.setdefault(key, {})
 
 
 def sync_harness(name: str, h: dict, shared: dict, root, dry: bool) -> dict:
