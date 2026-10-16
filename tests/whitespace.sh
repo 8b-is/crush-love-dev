@@ -28,10 +28,13 @@ for f in "${files[@]}"; do
   fi
 done
 
-python3 -c 'import py_compile, sys
+for py in "$root/bin/crush-love-doctor" "$root/scripts/mesh.py" "$root/scripts/lan-hub.py"; do
+  rel="${py#"$root"/}"
+  python3 -c 'import py_compile, sys
 py_compile.compile(sys.argv[1], cfile=sys.argv[2], doraise=True)' \
-  "$root/bin/crush-love-doctor" "$tmp/doctor.pyc" 2>"$tmp/pyerr" \
-  || { echo "syntax error: bin/crush-love-doctor"; cat "$tmp/pyerr"; fail=1; }
+    "$py" "$tmp/$(basename "$py").pyc" 2>"$tmp/pyerr" \
+    || { echo "syntax error: $rel"; cat "$tmp/pyerr"; fail=1; }
+done
 
 [[ $fail -eq 0 ]] || exit 1
 echo 'scripts: syntax clean, no tabs, no trailing whitespace, no CRLF'

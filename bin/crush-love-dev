@@ -24,7 +24,10 @@
 #   crush-love-dev --enthea             arm the enthea engine door: its MCP
 #                                       servers + personas into the session
 #   crush-love-dev --mesh [--via NAME]  render the harness mesh (crush ⇄ jcode ⇄
-#                                       opencode): one shared substrate, then launch
+#                                       opencode ⇄ agy): one shared substrate
+#   crush-love-dev --lan [start|stop|status]
+#                                       Mom (*) NAND Dad (△) LAN remote access
+#                                       (:4095 Family Hub, :4096 opencode, :4097 crush)
 #   crush-love-dev -h | --help          this help
 #   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
@@ -95,6 +98,18 @@ while [[ $# -gt 0 ]]; do
       bin="$SCRIPT_DIR/../ultra_omni_zen_peter"; src="$SCRIPT_DIR/../ultra_omni_zen_peter.rs"
       [[ -x "$bin" && "$bin" -nt "$src" ]] || rustc -O "$src" -o "$bin"
       exec "$bin" "$@"
+      ;;
+    --lan|--remote|--family)
+      shift
+      subcmd="${1:-start}"
+      if [[ $# -gt 0 ]]; then shift; fi
+      lan_py="$SCRIPT_DIR/../scripts/lan-hub.py"
+      [[ -f "$lan_py" ]] || { printf 'lan-hub: %s not found\n' "$lan_py" >&2; exit 1; }
+      if command -v uv >/dev/null 2>&1; then
+        exec uv run "$lan_py" "$subcmd" "$@"
+      else
+        exec python3 "$lan_py" "$subcmd" "$@"
+      fi
       ;;
     --mesh)
       shift

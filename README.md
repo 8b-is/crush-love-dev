@@ -27,7 +27,8 @@ crush-love-dev --lsp        # arm the vaked-lsp gateway: one LSP endpoint for
 crush-love-dev --enthea     # arm the enthea engine door: its MCP servers +
                             # personas into the session
 crush-love-dev --mesh       # peer mesh: one shared substrate (MCP · theme ·
-                            # persona · ledger) across crush ⇄ jcode ⇄ opencode
+                            # persona · ledger) across crush ⇄ jcode ⇄ opencode ⇄ agy
+crush-love-dev --lan        # Mom (*) NAND Dad (△) LAN remote access (:4095/:4096/:4097)
 crush-love-dev --version    # everything else passes through to crush
 ```
 
@@ -217,10 +218,11 @@ engine stays yours.
 
 ## the harness mesh — `crush-love-dev --mesh`
 
-Three coding harnesses live on this machine — **crush · jcode · opencode** —
+Four coding harnesses live on this machine — **crush · jcode · opencode · agy** —
 each with its own home and config dialect. `--mesh` makes them a **peer mesh
 with one shared brain**: it reads [`mesh.toml`](mesh.toml), renders the shared
-MCP set (plus the `ultralovegod` theme and a shared `AGENTS.md`) into each
+MCP set (including `wa-stream`, `memnet`, `ultra-mcp`, `swift-mcp`, `bluesky-mcp`
+plus the `ultralovegod` theme and a shared `AGENTS.md`) into each
 harness's native config, records the run in a ledger, then launches the harness
 you pick. Idempotent and safe — every write is backed up to `*.mesh-bak`, only
 happens if the file changes, and a corrupt JSON config is never clobbered.
@@ -229,13 +231,37 @@ happens if the file changes, and a corrupt JSON config is never clobbered.
 crush-love-dev --mesh                # sync + launch crush
 crush-love-dev --mesh --via jcode    # …or launch jcode's UI
 crush-love-dev --mesh --dry-run      # show what would change
-uv run scripts/mesh.py status        # → 4/4 shared MCP in each home
+uv run scripts/mesh.py status        # → 5/5 shared MCP in each home
 ```
 
-One source, three renderings: crush `mcp[id] = {type,command,args}` · jcode
+One source, four renderings: crush `mcp[id] = {type,command,args}` · jcode
 `servers[id] = {command,args,env,shared}` · opencode
-`mcp[id] = {command:[…],type:"local",enabled}`. Design +
+`mcp[id] = {command:[…],type:"local",enabled}` · agy
+`mcpServers[id] = {command,args}`. Design +
 [open questions](docs/harness-mesh.md).
+
+## Mom (`*` Alex) NAND Dad (`△` Chris) — LAN Remote Access (`--lan`)
+
+[`scripts/lan-hub.py`](scripts/lan-hub.py) exposes **both `crush-love-dev` and `opencode`**
+over the local network (`0.0.0.0` + mDNS + Tailscale) so **Mom (`*` Alex ~ Alexandra)**
+and **Dad (`△` Chris)** have full-access remote control of this M1's coding agents
+from any browser or terminal on the Wi-Fi:
+
+1. **`:4095` — Lódri Family LAN Hub (`http://<lan-ip>:4095` · `http://dev-main.local:4095`)**:
+   - Browser console for **`crush-love-dev (--yolo Full Access)`**, **`opencode (Full Access)`**, **`Mom * NAND Dad △ Dual Parallel Dispatch`**, and **M1 Shell (`zsh`)**.
+   - One-click presets (`ULTRA INSTINCT`, `ULTRA-OMNI-ZEN × QUANT-TERN`, `DO Loop`, `Emotional Ternary`, `Mesh Status`, `Crush Doctor`).
+   - Embedded tab for the live OpenCode Web UI.
+2. **`:4096` — Native `opencode serve` (`http://<lan-ip>:4096` · mDNS `opencode.local`)**:
+   - Full interactive OpenCode Web UI + ACP server (`--hostname 0.0.0.0 --port 4096 --mdns --cors "*"`) with `permission = {edit: "allow", bash: "allow", webfetch: "allow"}`.
+   - Terminal attach from any machine on LAN: `opencode attach http://<lan-ip>:4096`.
+3. **`:4097` — Native `crush server` (`tcp://<lan-ip>:4097`)**:
+   - Native Crush TCP server (`crush server --host tcp://0.0.0.0:4097`).
+
+```bash
+crush-love-dev --lan          # start :4095, :4096, and :4097 + print LAN URLs
+crush-love-dev --lan status   # check live status + LAN / mDNS / Tailscale URLs
+crush-love-dev --lan stop     # stop all managed LAN daemons
+```
 
 ## the theme
 
