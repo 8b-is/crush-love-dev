@@ -263,6 +263,23 @@ crush-love-dev --lan status   # check live status + LAN / mDNS / Tailscale URLs
 crush-love-dev --lan stop     # stop all managed LAN daemons
 ```
 
+## Sovereign Design Studio & `/design` CLI (`--design`)
+
+[`scripts/design-ops.py`](scripts/design-ops.py) powers the `/design` skill and
+[`design.vaked.dev`](https://design.vaked.dev) studio directly from `crush-love-dev`:
+
+```bash
+crush-love-dev --design status                                    # studio & contract audit overview
+crush-love-dev --design palettes                                  # list all 5 official 8b-is palettes
+crush-love-dev --design tokens -p ultralovegod -f css             # export CSS custom properties
+crush-love-dev --design tokens -p omnifold-industrial -f rust     # export Rust Rgb consts
+crush-love-dev --design tokens -p kintsugi-zen -f swift           # export SwiftUI Color enum
+crush-love-dev --design tokens -p ternary-matrix -f ghostty       # export Ghostty terminal theme
+crush-love-dev --design logos                                     # list 16 vector SVGs + 9 PNGs + live URLs
+crush-love-dev --design audit                                     # verify 8-point Constellation + Modern Web contract
+crush-love-dev --design sync                                      # sync 8b-is/marketing -> design.vaked.dev
+```
+
 ## the theme
 
 [`themes/themes.json`](themes/themes.json) — five crushes, led by

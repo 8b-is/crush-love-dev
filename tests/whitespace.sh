@@ -28,7 +28,7 @@ for f in "${files[@]}"; do
   fi
 done
 
-for py in "$root/bin/crush-love-doctor" "$root/scripts/mesh.py" "$root/scripts/lan-hub.py"; do
+for py in "$root/bin/crush-love-doctor" "$root/scripts/mesh.py" "$root/scripts/lan-hub.py" "$root/scripts/design-ops.py"; do
   rel="${py#"$root"/}"
   python3 -c 'import py_compile, sys
 py_compile.compile(sys.argv[1], cfile=sys.argv[2], doraise=True)' \

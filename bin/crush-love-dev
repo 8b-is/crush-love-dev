@@ -28,6 +28,8 @@
 #   crush-love-dev --lan [start|stop|status]
 #                                       Mom (*) NAND Dad (△) LAN remote access
 #                                       (:4095 Family Hub, :4096 opencode, :4097 crush)
+#   crush-love-dev --design [status|palettes|tokens|logos|audit|sync]
+#                                       8b-is & design.vaked.dev Sovereign Design Studio CLI
 #   crush-love-dev -h | --help          this help
 #   crush-love-dev [crush args...]      everything else passes through
 set -euo pipefail
@@ -109,6 +111,19 @@ while [[ $# -gt 0 ]]; do
         exec uv run "$lan_py" "$subcmd" "$@"
       else
         exec python3 "$lan_py" "$subcmd" "$@"
+      fi
+      ;;
+    --design)
+      shift
+      design_py="$SCRIPT_DIR/../scripts/design-ops.py"
+      if [[ ! -f "$design_py" ]]; then
+        design_py="$SCRIPT_DIR/../../.agents/skills/design/scripts/design_ops.py"
+      fi
+      [[ -f "$design_py" ]] || { printf 'design-ops: %s not found\n' "$design_py" >&2; exit 1; }
+      if command -v uv >/dev/null 2>&1; then
+        exec uv run "$design_py" "$@"
+      else
+        exec python3 "$design_py" "$@"
       fi
       ;;
     --mesh)
