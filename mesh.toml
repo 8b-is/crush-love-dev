@@ -77,3 +77,7 @@ config = "opencode.json"
 kind = "agy"
 home = "~/.gemini/config"
 config = "mcp_config.json"
+
+[shared.mcp.engram]
+command = "/Library/Frameworks/Python.framework/Versions/3.12/bin/python3"
+args = ["/Users/lodripeter/workspace/peterlodri-sec/Engram/mcp/engram_mcp.py"]
